@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: sys
+    password: geibyrf
+    url: jdbc:postgresql://localhost:5432/prc_exec
+    platform: postgres
+  jpa:
+    show-sql: true
+    database: postgresql
+
+camunda.bpm.admin-user:
+  id: admin
+  password: admin
