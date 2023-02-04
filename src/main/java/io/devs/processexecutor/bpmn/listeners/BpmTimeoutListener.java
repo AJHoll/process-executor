@@ -9,6 +9,6 @@ public class BpmTimeoutListener implements TaskListener {
 
     @Override
     public void notify(DelegateTask task) {
-        Object t = task;
+
     }
 }
