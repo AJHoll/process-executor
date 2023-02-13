@@ -32,7 +32,7 @@
       <bpmn:extensionElements>
         <camunda:taskListener expression="${purchaseMaterialTaskService.timeout(task)}" event="timeout" id="purchaseMaterialTask_timeout">
           <bpmn:timerEventDefinition id="TimerEventDefinition_0pndedi">
-            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT144S</bpmn:timeDuration>
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT18S</bpmn:timeDuration>
           </bpmn:timerEventDefinition>
         </camunda:taskListener>
       </bpmn:extensionElements>
@@ -46,7 +46,7 @@
       <bpmn:extensionElements>
         <camunda:taskListener expression="${deliveryMaterialTaskService.timeout(task)}" event="timeout" id="deliveryMaterialTask_timeout">
           <bpmn:timerEventDefinition id="TimerEventDefinition_164d0y9">
-            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT216S</bpmn:timeDuration>
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT36S</bpmn:timeDuration>
           </bpmn:timerEventDefinition>
         </camunda:taskListener>
         <camunda:taskListener expression="${deliveryMaterialTaskService.complete(task)}" event="complete" />
@@ -61,7 +61,7 @@
       <bpmn:extensionElements>
         <camunda:taskListener expression="${makeShtripsTaskService.timeout(task)}" event="timeout" id="makeShtripsTask_timeout">
           <bpmn:timerEventDefinition id="TimerEventDefinition_1qzu661">
-            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT72S</bpmn:timeDuration>
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT18S</bpmn:timeDuration>
           </bpmn:timerEventDefinition>
         </camunda:taskListener>
         <camunda:taskListener expression="${makeShtripsTaskService.complete(task)}" event="complete" />

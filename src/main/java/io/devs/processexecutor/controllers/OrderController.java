@@ -38,7 +38,7 @@ public class OrderController {
     private BigDecimal executeNewProcess(String processDefinitionId, String businessKey, BigDecimal needToProduct) {
         if (needToProduct.compareTo(BigDecimal.ZERO) > 0) {
             try {
-                Thread.sleep(10000);
+                Thread.sleep(6000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
