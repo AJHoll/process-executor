@@ -9,10 +9,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static com.tej.JooQDemo.jooq.sample.model.Tables.DICT_MATERIALS;
-import static com.tej.JooQDemo.jooq.sample.model.Tables.DICT_STOREHOUSE;
-import static io.devs.processexecutor.bpmn.constants.BpmProcessConst.CONSIGNMENT_QUANTITY;
-import static io.devs.processexecutor.bpmn.constants.BpmProcessConst.SHTRIPS_AMOUNT_IN_ONE_PRODDUCT;
+import static com.tej.JooQDemo.jooq.sample.model.Tables.*;
+import static io.devs.processexecutor.bpmn.constants.BpmProcessConst.*;
 import static org.jooq.impl.DSL.*;
 
 

@@ -20,7 +20,5 @@ public class RootStartEventService implements BpmExecutionStart {
     @Override
     public void start(DelegateExecution execution) {
         log.info("Process " + execution.getBusinessKey() + " started!");
-        List<ActRuExecution> exec = dsl.selectFrom(Tables.ACT_RU_EXECUTION).fetchInto(ActRuExecution.class);
-
     }
 }
