@@ -25,12 +25,13 @@ public class OrderController {
     private final RuntimeService runtimeService;
     private final DSLContext dsl;
 
-    @PostMapping("order/add/{qty}")
-    public void startOrder(@PathVariable("qty") BigDecimal qty) {
+    @PostMapping("order/add/{type}/{qty}")
+    public void startOrder(@PathVariable("qty") BigDecimal qty,
+                           @PathVariable("type") String type) {
         Record1<String> rec = dsl.insertInto(DICT_ORDER, DICT_ORDER.QTY).values(qty).returningResult(DICT_ORDER.CODE).fetchOne();
         if (rec != null && rec.getValue(DICT_ORDER.CODE) != null && !rec.getValue(DICT_ORDER.CODE).isEmpty()) {
             new Thread(() -> {
-                executeNewProcess("production_base_inline_v.0.3", rec.getValue(DICT_ORDER.CODE), qty);
+                executeNewProcess("production_" + type + "_inline", rec.getValue(DICT_ORDER.CODE), qty);
             }).start();
         }
     }

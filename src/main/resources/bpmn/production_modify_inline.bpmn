@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1c0own9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.7.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.18.0">
-  <bpmn:process id="production_modify_inline_v.0.2" name="production_modify_inline" isExecutable="true" camunda:versionTag="0.2">
+  <bpmn:process id="production_modify_inline" name="production_modify_inline" isExecutable="true" camunda:versionTag="0.4">
     <bpmn:startEvent id="RootStartEvent" name="Начало процесса">
       <bpmn:extensionElements>
         <camunda:executionListener expression="${rootStartEventService.start(execution)}" event="start" />
@@ -14,7 +14,7 @@
       <bpmn:incoming>Flow_1ejkak0</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_19bjheb" sourceRef="RootStartEvent" targetRef="processInitializeTask" />
-    <bpmn:serviceTask id="processInitializeTask" name="Определение кол-ва требуемых мат-лов" camunda:expression="${processInitializeTaskService.init(execution)}">
+    <bpmn:serviceTask id="processInitializeTask" name="Инициализация и Определение кол-ва требуемых мат-лов" camunda:expression="${processInitializeTaskService.init(execution)}">
       <bpmn:incoming>Flow_19bjheb</bpmn:incoming>
       <bpmn:outgoing>Flow_02fvmiq</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -25,84 +25,159 @@
       <bpmn:outgoing>Flow_0xxoixb</bpmn:outgoing>
       <bpmn:outgoing>Flow_00hrcpc</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_0xxoixb" sourceRef="Gateway_1sliw4j" targetRef="makeShtripsTask">
+    <bpmn:sequenceFlow id="Flow_0xxoixb" sourceRef="Gateway_1sliw4j" targetRef="needMakeOneShtripsTask">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${allMaterialExists == true}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:userTask id="purchaseMaterialTask" name="Закупка материалов" camunda:candidateGroups="purchasers">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${purchaseMaterialTaskService.timeout(task)}" event="timeout" id="purchaseMaterialTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_0pndedi">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT18S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_00hrcpc</bpmn:incoming>
       <bpmn:outgoing>Flow_19s0nw1</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:sequenceFlow id="Flow_00hrcpc" sourceRef="Gateway_1sliw4j" targetRef="purchaseMaterialTask">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${allMaterialExists == false}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:userTask id="deliveryMaterialTask" name="Поставка материалов" camunda:candidateGroups="purchasers">
+    <bpmn:userTask id="deliveryMaterialTask" name="Поставка 5т. металла" camunda:candidateGroups="purchasers">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${deliveryMaterialTaskService.timeout(task)}" event="timeout" id="deliveryMaterialTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_164d0y9">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT36S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+        <camunda:taskListener expression="${deliveryMaterialTaskService.complete(task)}" event="complete" />
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_19s0nw1</bpmn:incoming>
       <bpmn:outgoing>Flow_1sh4li9</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:sequenceFlow id="Flow_19s0nw1" sourceRef="purchaseMaterialTask" targetRef="deliveryMaterialTask" />
     <bpmn:sequenceFlow id="Flow_1sh4li9" sourceRef="deliveryMaterialTask" targetRef="Gateway_1sliw4j" />
-    <bpmn:sequenceFlow id="Flow_0rh3mbb" sourceRef="makeShtripsTask" targetRef="Gateway_0u8z5ua" />
+    <bpmn:sequenceFlow id="Flow_0rh3mbb" sourceRef="makeShtripsTask" targetRef="Gateway_1kwrgu9" />
     <bpmn:userTask id="makeShtripsTask" name="Резка 1 партии штрипса" camunda:candidateGroups="factory_dep_metall">
-      <bpmn:incoming>Flow_0xxoixb</bpmn:incoming>
-      <bpmn:incoming>Flow_1buktnd</bpmn:incoming>
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${makeShtripsTaskService.timeout(task)}" event="timeout" id="makeShtripsTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_1qzu661">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT18S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+        <camunda:taskListener expression="${makeShtripsTaskService.complete(task)}" event="complete" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0bwoaid</bpmn:incoming>
       <bpmn:outgoing>Flow_0rh3mbb</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_0z6kyg2" sourceRef="Gateway_0u8z5ua" targetRef="Gateway_0asi4fv">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${needOneMoreShtrips == false}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_1buktnd" name="Нужна еще партия" sourceRef="Gateway_0u8z5ua" targetRef="makeShtripsTask">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${needOneMoreShtrips == true}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_0eg209d" sourceRef="Gateway_0asi4fv" targetRef="makeBlankForKP01LTask" />
-    <bpmn:parallelGateway id="Gateway_0asi4fv">
-      <bpmn:incoming>Flow_0z6kyg2</bpmn:incoming>
+    <bpmn:sequenceFlow id="Flow_0eg209d" sourceRef="parallelProductionGateway" targetRef="makeBlankForKP01LTask" />
+    <bpmn:parallelGateway id="parallelProductionGateway">
+      <bpmn:extensionElements>
+        <camunda:executionListener expression="${parallelProductionGatewayService.start(execution)}" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_18bm39d</bpmn:incoming>
       <bpmn:outgoing>Flow_0eg209d</bpmn:outgoing>
       <bpmn:outgoing>Flow_1awvjgw</bpmn:outgoing>
       <bpmn:outgoing>Flow_0gj0uvu</bpmn:outgoing>
-      <bpmn:outgoing>Flow_16tey53</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1bev7b1</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:parallelGateway id="Gateway_0e6djlz">
       <bpmn:incoming>Flow_1xm89ie</bpmn:incoming>
       <bpmn:incoming>Flow_0mubicg</bpmn:incoming>
-      <bpmn:incoming>Flow_1bev7b1</bpmn:incoming>
-      <bpmn:incoming>Flow_1gjutlh</bpmn:incoming>
+      <bpmn:incoming>Flow_0ybgrwi</bpmn:incoming>
+      <bpmn:incoming>Flow_159qsu7</bpmn:incoming>
       <bpmn:outgoing>Flow_0vrybl4</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:sequenceFlow id="Flow_0vrybl4" sourceRef="Gateway_0e6djlz" targetRef="assemblyNH1Task" />
     <bpmn:userTask id="makeBlankForKP01LTask" name="Резка заг-ки КР-01Л" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${makeBlankForKP01LTaskService.timeout(task)}" event="timeout" id="makeBlankForKP01LTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_01ejazb">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0eg209d</bpmn:incoming>
       <bpmn:outgoing>Flow_0nnqhej</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="makeBlankForKP01PTask" name="Резка заг-ки КР-01П" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${makeBlankForKP01PTaskService.timeout(task)}" event="timeout" id="makeBlankForKP01PTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_1h8d37y">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_1awvjgw</bpmn:incoming>
       <bpmn:outgoing>Flow_0fil69w</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="makeBlankForPK1Task" name="Резка заг-ки ПКМ" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${makeBlankForPK1TaskService.timeout(task)}" event="timeout" id="makeBlankForPK1Task_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_0uo77pw">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0gj0uvu</bpmn:incoming>
       <bpmn:outgoing>Flow_1southt</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="drillBlankForKP01LTask" name="Сверление заг-ки КР-01Л" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${drillBlankForKP01LTaskService.timeout(task)}" event="timeout" id="drillBlankForKP01LTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_0gxdurq">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT10S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0nnqhej</bpmn:incoming>
       <bpmn:outgoing>Flow_1j30nqy</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="bendBlankForKP01LTask" name="Гибка заг-ки КР-01Л" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${bendBlankForKP01LTaskService.timeout(task)}" event="timeout" id="bendBlankForKP01LTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_1xsij2e">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT4S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_1j30nqy</bpmn:incoming>
       <bpmn:outgoing>Flow_0mubicg</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="drillBlankForKP01PTask" name="Сверление заг-ки КР-01П" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${drillBlankForKP01PTaskService.timeout(task)}" event="timeout" id="drillBlankForKP01PTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_1q5rbuk">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT10S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0fil69w</bpmn:incoming>
       <bpmn:outgoing>Flow_0muld5o</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="bendBlankForKP01PTask" name="Гибка заг-ки КР-01П" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${bendBlankForKP01PTaskService.timeout(task)}" event="timeout" id="bendBlankForKP01PTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_1bygjpk">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT4S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0muld5o</bpmn:incoming>
       <bpmn:outgoing>Flow_1xm89ie</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="drillBlankForPK1Task" name="Сверление заг-ки ПКМ" camunda:candidateGroups="factory_dep_processing">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${drillBlankForPK1TaskService.timeout(task)}" event="timeout" id="drillBlankForPK1Task_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_1u3zee5">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT16S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_1southt</bpmn:incoming>
-      <bpmn:outgoing>Flow_1bev7b1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_159qsu7</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_1awvjgw" sourceRef="Gateway_0asi4fv" targetRef="makeBlankForKP01PTask" />
-    <bpmn:sequenceFlow id="Flow_0gj0uvu" sourceRef="Gateway_0asi4fv" targetRef="makeBlankForPK1Task" />
+    <bpmn:sequenceFlow id="Flow_1awvjgw" sourceRef="parallelProductionGateway" targetRef="makeBlankForKP01PTask" />
+    <bpmn:sequenceFlow id="Flow_0gj0uvu" sourceRef="parallelProductionGateway" targetRef="makeBlankForPK1Task" />
     <bpmn:sequenceFlow id="Flow_0fil69w" sourceRef="makeBlankForKP01PTask" targetRef="drillBlankForKP01PTask" />
     <bpmn:sequenceFlow id="Flow_0muld5o" sourceRef="drillBlankForKP01PTask" targetRef="bendBlankForKP01PTask" />
     <bpmn:sequenceFlow id="Flow_1xm89ie" sourceRef="bendBlankForKP01PTask" targetRef="Gateway_0e6djlz" />
@@ -110,215 +185,261 @@
     <bpmn:sequenceFlow id="Flow_1j30nqy" sourceRef="drillBlankForKP01LTask" targetRef="bendBlankForKP01LTask" />
     <bpmn:sequenceFlow id="Flow_0mubicg" sourceRef="bendBlankForKP01LTask" targetRef="Gateway_0e6djlz" />
     <bpmn:sequenceFlow id="Flow_1southt" sourceRef="makeBlankForPK1Task" targetRef="drillBlankForPK1Task" />
-    <bpmn:sequenceFlow id="Flow_1bev7b1" sourceRef="drillBlankForPK1Task" targetRef="Gateway_0e6djlz" />
+    <bpmn:sequenceFlow id="Flow_1bev7b1" sourceRef="parallelProductionGateway" targetRef="makeSpacerTask" />
     <bpmn:userTask id="makeSpacerTask" name="Резка прокладки ППК" camunda:candidateGroups="factory_dep_processing">
-      <bpmn:incoming>Flow_16tey53</bpmn:incoming>
-      <bpmn:outgoing>Flow_1gjutlh</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${makeSpacerTaskService.timeout(task)}" event="timeout" id="makeSpacerTask_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_1yo1jhr">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT4S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1bev7b1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ybgrwi</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_16tey53" sourceRef="Gateway_0asi4fv" targetRef="makeSpacerTask" />
-    <bpmn:sequenceFlow id="Flow_1gjutlh" sourceRef="makeSpacerTask" targetRef="Gateway_0e6djlz" />
     <bpmn:sequenceFlow id="Flow_1ejkak0" sourceRef="assemblyNH1Task" targetRef="RootEndEvent" />
     <bpmn:userTask id="assemblyNH1Task" name="Сборка НХ-01" camunda:candidateGroups="factory_dep_assembly">
+      <bpmn:extensionElements>
+        <camunda:taskListener expression="${assemblyNH1TaskService.timeout(task)}" event="timeout" id="assemblyNH1Task_timeout">
+          <bpmn:timerEventDefinition id="TimerEventDefinition_0acgzi5">
+            <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT60S</bpmn:timeDuration>
+          </bpmn:timerEventDefinition>
+        </camunda:taskListener>
+        <camunda:taskListener expression="${assemblyNH1TaskService.complete(task)}" event="complete" />
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0vrybl4</bpmn:incoming>
       <bpmn:outgoing>Flow_1ejkak0</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:inclusiveGateway id="Gateway_0u8z5ua">
+    <bpmn:sequenceFlow id="Flow_0ybgrwi" sourceRef="makeSpacerTask" targetRef="Gateway_0e6djlz" />
+    <bpmn:sequenceFlow id="Flow_0ap887x" sourceRef="needMakeOneShtripsTask" targetRef="Gateway_09nwcmw" />
+    <bpmn:serviceTask id="needMakeOneShtripsTask" name="Нужно ли резать штрипс или он есть?" camunda:expression="${needMakeOneShtripsTaskService.check(execution)}">
+      <bpmn:incoming>Flow_0xxoixb</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ap887x</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_09nwcmw" name="Нужно ли резать еще?">
+      <bpmn:incoming>Flow_0ap887x</bpmn:incoming>
+      <bpmn:outgoing>Flow_0bwoaid</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0rylr88</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0bwoaid" sourceRef="Gateway_09nwcmw" targetRef="makeShtripsTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${needOneMoreShtrips == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0rylr88" sourceRef="Gateway_09nwcmw" targetRef="Gateway_1kwrgu9">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${needOneMoreShtrips == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="Gateway_1kwrgu9">
       <bpmn:incoming>Flow_0rh3mbb</bpmn:incoming>
-      <bpmn:outgoing>Flow_0z6kyg2</bpmn:outgoing>
-      <bpmn:outgoing>Flow_1buktnd</bpmn:outgoing>
-    </bpmn:inclusiveGateway>
+      <bpmn:incoming>Flow_0rylr88</bpmn:incoming>
+      <bpmn:outgoing>Flow_18bm39d</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_18bm39d" sourceRef="Gateway_1kwrgu9" targetRef="parallelProductionGateway" />
+    <bpmn:sequenceFlow id="Flow_159qsu7" sourceRef="drillBlankForPK1Task" targetRef="Gateway_0e6djlz" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="production_modify_inline_v.0.2">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="production_modify_inline">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="RootStartEvent" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
-        <dc:Bounds x="142" y="209" width="36" height="36" />
+        <dc:Bounds x="182" y="209" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="118" y="252" width="90" height="14" />
+          <dc:Bounds x="158" y="252" width="90" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0lw3ar4_di" bpmnElement="RootEndEvent" bioc:stroke="#831311" bioc:fill="#ffcdd2" color:background-color="#ffcdd2" color:border-color="#831311">
-        <dc:Bounds x="1422" y="209" width="36" height="36" />
+        <dc:Bounds x="1502" y="209" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1410" y="252" width="65" height="27" />
+          <dc:Bounds x="1490" y="252" width="65" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0fmhr3f_di" bpmnElement="processInitializeTask">
-        <dc:Bounds x="220" y="187" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_0fmhr3f_di" bpmnElement="processInitializeTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="260" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_1sliw4j_di" bpmnElement="Gateway_1sliw4j" isMarkerVisible="true" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
-        <dc:Bounds x="445" y="202" width="50" height="50" />
+        <dc:Bounds x="485" y="202" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="431" y="259" width="80" height="27" />
+          <dc:Bounds x="471" y="259" width="80" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0dj8k9b_di" bpmnElement="purchaseMaterialTask">
-        <dc:Bounds x="420" y="80" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_0dj8k9b_di" bpmnElement="purchaseMaterialTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="460" y="80" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1vepe0s_di" bpmnElement="deliveryMaterialTask">
-        <dc:Bounds x="290" y="80" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_1vepe0s_di" bpmnElement="deliveryMaterialTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="330" y="80" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0zqkc3t_di" bpmnElement="makeShtripsTask">
-        <dc:Bounds x="540" y="187" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_0zqkc3t_di" bpmnElement="makeShtripsTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="660" y="100" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1jr09jy_di" bpmnElement="Gateway_0asi4fv" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
-        <dc:Bounds x="745" y="202" width="50" height="50" />
+      <bpmndi:BPMNShape id="Gateway_1jr09jy_di" bpmnElement="parallelProductionGateway" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="825" y="202" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_1k9t89n" bpmnElement="Gateway_0e6djlz" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
-        <dc:Bounds x="1205" y="202" width="50" height="50" />
+        <dc:Bounds x="1285" y="202" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1anklx1_di" bpmnElement="makeBlankForKP01LTask">
-        <dc:Bounds x="826" y="80" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_1anklx1_di" bpmnElement="makeBlankForKP01LTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="906" y="80" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0cz047y" bpmnElement="makeBlankForKP01PTask">
-        <dc:Bounds x="826" y="187" width="100" height="80" />
+      <bpmndi:BPMNShape id="BPMNShape_0cz047y" bpmnElement="makeBlankForKP01PTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="906" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0ycvnkn" bpmnElement="makeBlankForPK1Task">
-        <dc:Bounds x="826" y="300" width="100" height="80" />
+      <bpmndi:BPMNShape id="BPMNShape_04jv5so" bpmnElement="drillBlankForKP01LTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1030" y="80" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_04jv5so" bpmnElement="drillBlankForKP01LTask">
-        <dc:Bounds x="950" y="80" width="100" height="80" />
+      <bpmndi:BPMNShape id="BPMNShape_09dblz0" bpmnElement="bendBlankForKP01LTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1156" y="80" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_09dblz0" bpmnElement="bendBlankForKP01LTask">
-        <dc:Bounds x="1076" y="80" width="100" height="80" />
+      <bpmndi:BPMNShape id="BPMNShape_1rvfjfz" bpmnElement="drillBlankForKP01PTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1030" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1rvfjfz" bpmnElement="drillBlankForKP01PTask">
-        <dc:Bounds x="950" y="187" width="100" height="80" />
+      <bpmndi:BPMNShape id="BPMNShape_0h08w1f" bpmnElement="bendBlankForKP01PTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1156" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0h08w1f" bpmnElement="bendBlankForKP01PTask">
-        <dc:Bounds x="1076" y="187" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_180dbsc_di" bpmnElement="assemblyNH1Task" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1360" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_03qg435" bpmnElement="drillBlankForPK1Task">
-        <dc:Bounds x="950" y="300" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_0tbacfb_di" bpmnElement="needMakeOneShtripsTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="564" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0g44eaw" bpmnElement="makeSpacerTask">
-        <dc:Bounds x="826" y="400" width="100" height="80" />
+      <bpmndi:BPMNShape id="Gateway_09nwcmw_di" bpmnElement="Gateway_09nwcmw" isMarkerVisible="true" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="685" y="202" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="667" y="259" width="86" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1kwrgu9_di" bpmnElement="Gateway_1kwrgu9" isMarkerVisible="true" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="755" y="202" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_03qg435" bpmnElement="drillBlankForPK1Task" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1030" y="290" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_180dbsc_di" bpmnElement="assemblyNH1Task">
-        <dc:Bounds x="1280" y="187" width="100" height="80" />
+      <bpmndi:BPMNShape id="BPMNShape_0ycvnkn" bpmnElement="makeBlankForPK1Task" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="906" y="290" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1m4yqug_di" bpmnElement="Gateway_0u8z5ua" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
-        <dc:Bounds x="665" y="202" width="50" height="50" />
+      <bpmndi:BPMNShape id="BPMNShape_0g44eaw" bpmnElement="makeSpacerTask" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1030" y="394" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_19bjheb_di" bpmnElement="Flow_19bjheb">
-        <di:waypoint x="178" y="227" />
-        <di:waypoint x="220" y="227" />
+        <di:waypoint x="218" y="227" />
+        <di:waypoint x="260" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_02fvmiq_di" bpmnElement="Flow_02fvmiq">
-        <di:waypoint x="320" y="227" />
-        <di:waypoint x="445" y="227" />
+        <di:waypoint x="360" y="227" />
+        <di:waypoint x="485" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0xxoixb_di" bpmnElement="Flow_0xxoixb">
-        <di:waypoint x="495" y="227" />
-        <di:waypoint x="540" y="227" />
+        <di:waypoint x="535" y="227" />
+        <di:waypoint x="564" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_00hrcpc_di" bpmnElement="Flow_00hrcpc">
-        <di:waypoint x="470" y="202" />
-        <di:waypoint x="470" y="160" />
+        <di:waypoint x="510" y="202" />
+        <di:waypoint x="510" y="160" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_19s0nw1_di" bpmnElement="Flow_19s0nw1">
-        <di:waypoint x="420" y="120" />
-        <di:waypoint x="390" y="120" />
+        <di:waypoint x="460" y="120" />
+        <di:waypoint x="430" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1sh4li9_di" bpmnElement="Flow_1sh4li9">
-        <di:waypoint x="340" y="160" />
-        <di:waypoint x="340" y="227" />
-        <di:waypoint x="445" y="227" />
+        <di:waypoint x="380" y="160" />
+        <di:waypoint x="380" y="227" />
+        <di:waypoint x="485" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0rh3mbb_di" bpmnElement="Flow_0rh3mbb">
-        <di:waypoint x="640" y="227" />
-        <di:waypoint x="665" y="227" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0z6kyg2_di" bpmnElement="Flow_0z6kyg2">
-        <di:waypoint x="715" y="227" />
-        <di:waypoint x="745" y="227" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1buktnd_di" bpmnElement="Flow_1buktnd">
-        <di:waypoint x="690" y="202" />
-        <di:waypoint x="690" y="160" />
-        <di:waypoint x="590" y="160" />
-        <di:waypoint x="590" y="187" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="611" y="127" width="58" height="27" />
-        </bpmndi:BPMNLabel>
+        <di:waypoint x="760" y="140" />
+        <di:waypoint x="780" y="140" />
+        <di:waypoint x="780" y="202" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0eg209d_di" bpmnElement="Flow_0eg209d">
-        <di:waypoint x="770" y="202" />
-        <di:waypoint x="770" y="120" />
-        <di:waypoint x="826" y="120" />
+        <di:waypoint x="850" y="202" />
+        <di:waypoint x="850" y="120" />
+        <di:waypoint x="906" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0vrybl4_di" bpmnElement="Flow_0vrybl4">
-        <di:waypoint x="1255" y="227" />
-        <di:waypoint x="1280" y="227" />
+        <di:waypoint x="1335" y="227" />
+        <di:waypoint x="1360" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1awvjgw_di" bpmnElement="Flow_1awvjgw">
-        <di:waypoint x="795" y="227" />
-        <di:waypoint x="826" y="227" />
+        <di:waypoint x="875" y="227" />
+        <di:waypoint x="906" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0gj0uvu_di" bpmnElement="Flow_0gj0uvu">
-        <di:waypoint x="770" y="252" />
-        <di:waypoint x="770" y="340" />
-        <di:waypoint x="826" y="340" />
+        <di:waypoint x="850" y="252" />
+        <di:waypoint x="850" y="330" />
+        <di:waypoint x="906" y="330" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0fil69w_di" bpmnElement="Flow_0fil69w">
-        <di:waypoint x="926" y="227" />
-        <di:waypoint x="950" y="227" />
+        <di:waypoint x="1006" y="227" />
+        <di:waypoint x="1030" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0muld5o_di" bpmnElement="Flow_0muld5o">
-        <di:waypoint x="1050" y="227" />
-        <di:waypoint x="1076" y="227" />
+        <di:waypoint x="1130" y="227" />
+        <di:waypoint x="1156" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1xm89ie_di" bpmnElement="Flow_1xm89ie">
-        <di:waypoint x="1176" y="227" />
-        <di:waypoint x="1205" y="227" />
+        <di:waypoint x="1256" y="227" />
+        <di:waypoint x="1285" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0nnqhej_di" bpmnElement="Flow_0nnqhej">
-        <di:waypoint x="926" y="120" />
-        <di:waypoint x="950" y="120" />
+        <di:waypoint x="1006" y="120" />
+        <di:waypoint x="1030" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1j30nqy_di" bpmnElement="Flow_1j30nqy">
-        <di:waypoint x="1050" y="120" />
-        <di:waypoint x="1076" y="120" />
+        <di:waypoint x="1130" y="120" />
+        <di:waypoint x="1156" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0mubicg_di" bpmnElement="Flow_0mubicg">
-        <di:waypoint x="1176" y="120" />
-        <di:waypoint x="1230" y="120" />
-        <di:waypoint x="1230" y="202" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1southt_di" bpmnElement="Flow_1southt">
-        <di:waypoint x="926" y="340" />
-        <di:waypoint x="950" y="340" />
+        <di:waypoint x="1256" y="120" />
+        <di:waypoint x="1310" y="120" />
+        <di:waypoint x="1310" y="202" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1bev7b1_di" bpmnElement="Flow_1bev7b1">
-        <di:waypoint x="1050" y="340" />
-        <di:waypoint x="1230" y="340" />
-        <di:waypoint x="1230" y="252" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_16tey53_di" bpmnElement="Flow_16tey53">
-        <di:waypoint x="770" y="252" />
-        <di:waypoint x="770" y="440" />
-        <di:waypoint x="826" y="440" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1gjutlh_di" bpmnElement="Flow_1gjutlh">
-        <di:waypoint x="926" y="440" />
-        <di:waypoint x="1230" y="440" />
-        <di:waypoint x="1230" y="252" />
+        <di:waypoint x="850" y="252" />
+        <di:waypoint x="850" y="434" />
+        <di:waypoint x="1030" y="434" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1ejkak0_di" bpmnElement="Flow_1ejkak0">
-        <di:waypoint x="1380" y="227" />
-        <di:waypoint x="1422" y="227" />
+        <di:waypoint x="1460" y="227" />
+        <di:waypoint x="1502" y="227" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ybgrwi_di" bpmnElement="Flow_0ybgrwi">
+        <di:waypoint x="1130" y="434" />
+        <di:waypoint x="1310" y="434" />
+        <di:waypoint x="1310" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ap887x_di" bpmnElement="Flow_0ap887x">
+        <di:waypoint x="664" y="227" />
+        <di:waypoint x="685" y="227" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bwoaid_di" bpmnElement="Flow_0bwoaid">
+        <di:waypoint x="710" y="202" />
+        <di:waypoint x="710" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0rylr88_di" bpmnElement="Flow_0rylr88">
+        <di:waypoint x="735" y="227" />
+        <di:waypoint x="755" y="227" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18bm39d_di" bpmnElement="Flow_18bm39d">
+        <di:waypoint x="805" y="227" />
+        <di:waypoint x="825" y="227" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_159qsu7_di" bpmnElement="Flow_159qsu7">
+        <di:waypoint x="1130" y="330" />
+        <di:waypoint x="1310" y="330" />
+        <di:waypoint x="1310" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1southt_di" bpmnElement="Flow_1southt">
+        <di:waypoint x="1006" y="330" />
+        <di:waypoint x="1030" y="330" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
