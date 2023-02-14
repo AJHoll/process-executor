@@ -1,6 +1,7 @@
 package io.devs.processexecutor.bpmn.services;
 
 import com.tej.JooQDemo.jooq.sample.model.routines.Addmaterialamount;
+import io.devs.processexecutor.bpmn.constants.BpmProcessConst;
 import io.devs.processexecutor.bpmn.interfaces.BpmTaskComplete;
 import io.devs.processexecutor.bpmn.interfaces.BpmTaskCreate;
 import io.devs.processexecutor.bpmn.interfaces.BpmTaskTimeout;
@@ -28,7 +29,7 @@ public class AssemblyNH1TaskService implements BpmTaskCreate, BpmTaskComplete, B
                 .fetchInto(Long.class).get(0);
         Addmaterialamount addFunc = new Addmaterialamount();
         addFunc.setMaterialId(BigDecimal.valueOf(productId));
-        addFunc.setAmount(BigDecimal.valueOf(100));
+        addFunc.setAmount(BigDecimal.valueOf(BpmProcessConst.CONSIGNMENT_QUANTITY));
         addFunc.execute(dsl.configuration());
     }
 
