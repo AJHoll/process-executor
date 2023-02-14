@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.management.timer.Timer;
 import java.math.BigDecimal;
 
 import static com.tej.JooQDemo.jooq.sample.model.tables.DictOrder.DICT_ORDER;
@@ -30,15 +29,16 @@ public class OrderController {
     public void startOrder(@PathVariable("qty") BigDecimal qty) {
         Record1<String> rec = dsl.insertInto(DICT_ORDER, DICT_ORDER.QTY).values(qty).returningResult(DICT_ORDER.CODE).fetchOne();
         if (rec != null && rec.getValue(DICT_ORDER.CODE) != null && !rec.getValue(DICT_ORDER.CODE).isEmpty()) {
-            executeNewProcess("production_base_inline_v.0.3", rec.getValue(DICT_ORDER.CODE), qty);
-
+            new Thread(() -> {
+                executeNewProcess("production_base_inline_v.0.3", rec.getValue(DICT_ORDER.CODE), qty);
+            }).start();
         }
     }
 
     private BigDecimal executeNewProcess(String processDefinitionId, String businessKey, BigDecimal needToProduct) {
         if (needToProduct.compareTo(BigDecimal.ZERO) > 0) {
             try {
-                Thread.sleep(6000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
